@@ -44,17 +44,9 @@ const completeSelect = document.getElementById("completeSelect");
 const autoplaySelect = document.getElementById("autoplaySelect");
 const designHex = document.getElementById("designHex");
 const designLabel = document.getElementById("designLabel");
+const designInfo = document.getElementById("designInfo");
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
-const lightbox = document.getElementById("lightbox");
-const lightboxHex = document.getElementById("lightboxHex");
-const lightboxLabel = document.getElementById("lightboxLabel");
-const lightboxControls = document.getElementById("lightboxControls");
-const lightboxProgress = document.getElementById("lightboxProgress");
-const lightPrev = document.getElementById("lightPrev");
-const lightNext = document.getElementById("lightNext");
-const lightProgressBar = document.getElementById("lightProgressBar");
-const lightProgressText = document.getElementById("lightProgressText");
 const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 const controlGroups = Array.from(document.querySelectorAll("[data-controls]"));
 const lineButtons = Array.from(document.querySelectorAll(".line-btn"));
@@ -64,14 +56,12 @@ let currentView = "random";
 let completeMode = "shuffle";
 let completeOrder = [];
 let completeIndex = 0;
-let currentRenderedIndices = [];
 let manualLines = Array(6).fill(1);
 let rolling = false;
-let lightboxIndices = [];
-let lightboxPosition = 0;
-let lightboxContext = "set";
 let autoplayMs = 3000;
 let autoplayTimer = null;
+let wenSections = null;
+let wenInfoCache = new Map();
 
 function randInt(max) {
   if (window.crypto && window.crypto.getRandomValues) {
@@ -99,7 +89,6 @@ function pickRandom(count) {
 function render(indices) {
   grid.innerHTML = "";
   grid.dataset.count = String(indices.length);
-  currentRenderedIndices = indices.slice();
 
   const fragment = document.createDocumentFragment();
   indices.forEach((index, i) => {
@@ -199,6 +188,7 @@ function renderDesign() {
   designHex.dataset.index = String(index);
   designLabel.textContent = `Hexagrama ${hex.id} · Fila ${row} Col ${col} · ${binary}`;
   rollLabel.textContent = `Hexagrama ${hex.id}`;
+  loadWenInfo(hex.id);
 }
 
 function buildCompleteOrder(mode) {
@@ -220,10 +210,6 @@ function renderComplete() {
   progressBar.style.width = `${(current / 64) * 100}%`;
   progressText.textContent = `${current} / 64`;
   rollLabel.textContent = `Hexagrama ${index + 1}`;
-  if (lightbox.classList.contains("is-open") && lightboxContext === "complete") {
-    lightboxPosition = completeIndex;
-    updateLightbox();
-  }
 }
 
 function stepComplete(delta) {
@@ -238,57 +224,6 @@ function stepComplete(delta) {
     completeIndex = (completeIndex + delta + completeOrder.length) % completeOrder.length;
   }
   renderComplete();
-  if (lightbox.classList.contains("is-open") && lightboxContext === "complete") {
-    lightboxPosition = completeIndex;
-    updateLightbox();
-  }
-}
-
-function updateLightbox() {
-  const index = lightboxIndices[lightboxPosition];
-  const hex = HEXES[index];
-  lightboxHex.style.setProperty("--bx", `-${hex.x}px`);
-  lightboxHex.style.setProperty("--by", `-${hex.y}px`);
-  lightboxHex.dataset.hex = String(hex.id);
-  lightboxHex.dataset.index = String(index);
-  lightboxLabel.textContent = `Hexagrama ${hex.id}`;
-
-  const showNav = lightboxIndices.length > 1;
-  lightboxControls.classList.toggle("is-hidden", !showNav);
-  if (lightboxContext === "complete") {
-    const current = lightboxPosition + 1;
-    lightProgressBar.style.width = `${(current / 64) * 100}%`;
-    lightProgressText.textContent = `${current} / 64`;
-    lightboxProgress.classList.remove("is-hidden");
-  } else {
-    lightboxProgress.classList.add("is-hidden");
-  }
-}
-
-function openLightbox(indices, position, context = "set") {
-  lightboxIndices = indices;
-  lightboxPosition = position;
-  lightboxContext = context;
-  lightbox.dataset.context = context;
-  updateLightbox();
-  lightbox.classList.add("is-open");
-  lightbox.setAttribute("aria-hidden", "false");
-}
-
-function closeLightbox() {
-  lightbox.classList.remove("is-open");
-  lightbox.setAttribute("aria-hidden", "true");
-  lightbox.dataset.context = "";
-}
-
-function moveLightbox(delta) {
-  if (lightboxContext === "complete") {
-    stepComplete(delta);
-    return;
-  }
-  const len = lightboxIndices.length || 1;
-  lightboxPosition = (lightboxPosition + delta + len) % len;
-  updateLightbox();
 }
 
 function updateAutoplay() {
@@ -300,6 +235,64 @@ function updateAutoplay() {
     autoplayTimer = setInterval(() => {
       stepComplete(1);
     }, autoplayMs);
+  }
+}
+
+async function fetchWenSections() {
+  if (wenSections) return wenSections;
+  const url = "https://es.wikipedia.org/w/api.php?action=parse&page=Anexo:Hexagramas_del_I_Ching&prop=sections&format=json&origin=*";
+  const res = await fetch(url);
+  const data = await res.json();
+  const map = new Map();
+  for (const section of data.parse.sections) {
+    const match = section.line.match(/Hexagrama\\s+(\\d+)/i);
+    if (match) {
+      map.set(Number(match[1]), section.index);
+    }
+  }
+  wenSections = map;
+  return map;
+}
+
+async function loadWenInfo(hexNumber) {
+  if (!designInfo) return;
+  if (wenInfoCache.has(hexNumber)) {
+    designInfo.textContent = wenInfoCache.get(hexNumber);
+    return;
+  }
+  try {
+    designInfo.textContent = "Cargando descripcion...";
+    const sections = await fetchWenSections();
+    const sectionId = sections.get(hexNumber);
+    if (!sectionId) {
+      designInfo.textContent = "";
+      return;
+    }
+    const url = `https://es.wikipedia.org/w/api.php?action=parse&page=Anexo:Hexagramas_del_I_Ching&prop=text&section=${sectionId}&format=json&origin=*`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = data.parse.text["*"];
+    const paragraphs = Array.from(wrapper.querySelectorAll("p"))
+      .map((p) => p.textContent.trim())
+      .filter(Boolean);
+    const dictamenIndex = paragraphs.findIndex((p) => p.toLowerCase().startsWith("el dictamen"));
+    let summary = paragraphs[0] || "";
+    if (dictamenIndex !== -1) {
+      summary = paragraphs[dictamenIndex].replace(/El dictamen dice:?/i, "").trim();
+    }
+    if (!summary) {
+      const blockquote = wrapper.querySelector("blockquote");
+      if (blockquote) {
+        summary = blockquote.textContent.trim();
+      }
+    }
+    const cleaned = summary.replace(/\\s+/g, " ").trim();
+    const finalText = cleaned ? `Dictamen: ${cleaned}` : "";
+    wenInfoCache.set(hexNumber, finalText);
+    designInfo.textContent = finalText;
+  } catch (error) {
+    designInfo.textContent = "";
   }
 }
 
@@ -380,51 +373,6 @@ lineButtons.forEach((button) => {
     renderDesign();
   });
 });
-
-function openLightbox(hexId, bx, by) {
-  lightboxHex.style.setProperty("--bx", bx);
-  lightboxHex.style.setProperty("--by", by);
-  lightboxHex.dataset.hex = String(hexId);
-  lightboxLabel.textContent = `Hexagrama ${hexId}`;
-  lightbox.classList.add("is-open");
-  lightbox.setAttribute("aria-hidden", "false");
-}
-
-function closeLightbox() {
-  lightbox.classList.remove("is-open");
-  lightbox.setAttribute("aria-hidden", "true");
-}
-
-document.addEventListener("click", (event) => {
-  const target = event.target;
-  if (target instanceof HTMLElement && target.classList.contains("hex")) {
-    if (target.closest(".lightbox")) return;
-    const index = Number(target.dataset.index);
-    if (!Number.isFinite(index)) return;
-    if (currentView === "complete") {
-      openLightbox(completeOrder, completeIndex, "complete");
-    } else if (currentView === "design") {
-      openLightbox([index], 0, "single");
-    } else {
-      const pos = currentRenderedIndices.indexOf(index);
-      const list = currentRenderedIndices.length ? currentRenderedIndices : [index];
-      openLightbox(list, Math.max(0, pos), "set");
-    }
-    return;
-  }
-  if (target instanceof HTMLElement && target.id === "lightbox") {
-    closeLightbox();
-  }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    closeLightbox();
-  }
-});
-
-lightPrev.addEventListener("click", () => moveLightbox(-1));
-lightNext.addEventListener("click", () => moveLightbox(1));
 
 setMode(1, false);
 setView("random", true);

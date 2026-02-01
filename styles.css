@@ -144,6 +144,13 @@ select {
   justify-items: center;
 }
 
+.design-info {
+  max-width: 320px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.4;
+}
 .design-hex {
   --scale: 1.05;
 }
@@ -302,7 +309,6 @@ select {
   border-radius: 12px;
   box-shadow: 0 12px 24px rgba(29, 26, 20, 0.15);
   image-rendering: auto;
-  cursor: zoom-in;
 }
 
 .grid[data-view="rows"] .hex-item {
@@ -329,71 +335,6 @@ select {
   gap: 24px;
 }
 
-.lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 9, 8, 0.82);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  z-index: 50;
-}
-
-.lightbox.is-open {
-  display: flex;
-}
-
-.lightbox-card {
-  display: grid;
-  gap: 12px;
-  justify-items: center;
-  text-align: center;
-  background: #fff;
-  padding: 24px 20px 18px;
-  border-radius: 20px;
-  max-width: min(90vw, 480px);
-  max-height: 90vh;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
-}
-
-.lightbox-hex {
-  --scale: 1.3;
-  width: min(calc(var(--cell-w) * var(--scale)), 80vw);
-  height: min(calc(var(--cell-h) * var(--scale)), 70vh);
-  box-shadow: none;
-  cursor: zoom-out;
-}
-
-.lightbox-label {
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.lightbox-controls {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
-.lightbox-progress {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-}
-
-.lightbox-controls.is-hidden,
-.lightbox-progress.is-hidden {
-  display: none;
-}
-
-.lightbox:not([data-context="complete"]) .lightbox-progress {
-  display: none;
-}
 
 .hex-label {
   font-size: 0.85rem;
