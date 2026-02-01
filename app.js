@@ -856,17 +856,18 @@ no hay nada que sea propicio.
 
 function parseWenRaw(raw) {
   const map = {};
-  const regex = /Hexagrama\\s+(\\d+)\\s*\\n([\\s\\S]*?)(?=\\nHexagrama\\s+\\d+|$)/gi;
+  const normalized = raw.replace(/\r/g, "");
+  const regex = /Hexagrama\s+(\d+)\s*\n([\s\S]*?)(?=\nHexagrama\s+\d+|$)/gi;
   let match = null;
-  while ((match = regex.exec(raw)) !== null) {
+  while ((match = regex.exec(normalized)) !== null) {
     const num = Number(match[1]);
     const body = match[2].trim();
-    const parts = body.split(/El Dictamen dice:\\s*/i);
+    const parts = body.split(/El Dictamen dice:\s*/i);
     const descripcion = parts[0].trim();
     const dictamen = parts[1] ? parts[1].trim() : "";
-    const symbolMatch = descripcion.match(/[\\u3400-\\u9FFF]+/);
+    const symbolMatch = descripcion.match(/[\u3400-\u9FFF]+/);
     const simbolo = symbolMatch ? symbolMatch[0] : "";
-    const nameMatch = descripcion.match(/[\"“]([^\"”]+)[\"”]/);
+    const nameMatch = descripcion.match(/["“]([^"”]+)["”]/);
     const nombre = nameMatch ? nameMatch[1] : "";
     map[num] = { nombre, simbolo, descripcion, dictamen };
   }
@@ -874,7 +875,6 @@ function parseWenRaw(raw) {
 }
 
 const WEN_INFO = parseWenRaw(WEN_RAW);
-console.log("[iChing] WEN_INFO size", Object.keys(WEN_INFO).length);
 
 function randInt(max) {
   if (window.crypto && window.crypto.getRandomValues) {
