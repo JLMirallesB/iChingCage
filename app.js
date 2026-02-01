@@ -1,11 +1,11 @@
 const SHEET = {
-  width: 2000,
-  height: 2000,
-  cellW: 198,
-  cellH: 201,
-  margin: 10,
-  cols: [144, 362, 580, 798, 1016, 1234, 1452, 1670],
-  rows: [146, 364, 582, 800, 1019, 1236, 1454, 1673],
+  width: 4000,
+  height: 4000,
+  cellW: 396,
+  cellH: 402,
+  margin: 20,
+  cols: [288, 724, 1160, 1596, 2032, 2468, 2904, 3340],
+  rows: [292, 728, 1164, 1600, 2038, 2472, 2908, 3346],
 };
 
 const HEXES = [];
@@ -32,6 +32,9 @@ const designHex = document.getElementById("designHex");
 const designLabel = document.getElementById("designLabel");
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
+const lightbox = document.getElementById("lightbox");
+const lightboxHex = document.getElementById("lightboxHex");
+const lightboxLabel = document.getElementById("lightboxLabel");
 const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 const controlGroups = Array.from(document.querySelectorAll("[data-controls]"));
 const lineButtons = Array.from(document.querySelectorAll(".line-btn"));
@@ -84,6 +87,7 @@ function render(indices) {
     glyph.style.setProperty("--by", `-${hex.y}px`);
     glyph.setAttribute("role", "img");
     glyph.setAttribute("aria-label", `Hexagrama ${hex.id}`);
+    glyph.dataset.hex = String(hex.id);
 
     const label = document.createElement("div");
     label.className = "hex-label";
@@ -163,9 +167,13 @@ function linesToIndex(linesTopToBottom) {
 function renderDesign() {
   const index = linesToIndex(manualLines);
   const hex = HEXES[index];
+  const row = Math.floor(index / 8) + 1;
+  const col = (index % 8) + 1;
+  const binary = manualLines.map((bit) => (bit ? 1 : 0)).join("");
   designHex.style.setProperty("--bx", `-${hex.x}px`);
   designHex.style.setProperty("--by", `-${hex.y}px`);
-  designLabel.textContent = `Hexagrama ${hex.id}`;
+  designHex.dataset.hex = String(hex.id);
+  designLabel.textContent = `Hexagrama ${hex.id} · Fila ${row} Col ${col} · ${binary}`;
   rollLabel.textContent = `Hexagrama ${hex.id}`;
 }
 
@@ -260,6 +268,42 @@ lineButtons.forEach((button) => {
     button.textContent = manualLines[index] ? "—" : "-- --";
     renderDesign();
   });
+});
+
+function openLightbox(hexId, bx, by) {
+  lightboxHex.style.setProperty("--bx", bx);
+  lightboxHex.style.setProperty("--by", by);
+  lightboxHex.dataset.hex = String(hexId);
+  lightboxLabel.textContent = `Hexagrama ${hexId}`;
+  lightbox.classList.add("is-open");
+  lightbox.setAttribute("aria-hidden", "false");
+}
+
+function closeLightbox() {
+  lightbox.classList.remove("is-open");
+  lightbox.setAttribute("aria-hidden", "true");
+}
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (target instanceof HTMLElement && target.classList.contains("hex")) {
+    const hexId = Number(target.dataset.hex);
+    const bx = target.style.getPropertyValue("--bx");
+    const by = target.style.getPropertyValue("--by");
+    if (hexId && bx && by) {
+      openLightbox(hexId, bx, by);
+    }
+    return;
+  }
+  if (target instanceof HTMLElement && (target.id === "lightbox" || target.classList.contains("lightbox-hex"))) {
+    closeLightbox();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeLightbox();
+  }
 });
 
 setMode(1, false);

@@ -7,10 +7,10 @@
   --accent: #b0562b;
   --accent-2: #2b5d52;
   --card: #fbfaf7;
-  --sheet-w: 2000px;
-  --sheet-h: 2000px;
-  --cell-w: 198px;
-  --cell-h: 201px;
+  --sheet-w: 4000px;
+  --sheet-h: 4000px;
+  --cell-w: 396px;
+  --cell-h: 402px;
 }
 
 * {
@@ -145,7 +145,7 @@ select {
 }
 
 .design-hex {
-  --scale: 0.95;
+  --scale: 1;
 }
 
 .complete-controls {
@@ -249,7 +249,7 @@ select {
   justify-items: center;
   min-height: 220px;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  --scale: 0.8;
+  --scale: 0.85;
 }
 
 .grid[data-view="design"] {
@@ -265,21 +265,21 @@ select {
 }
 
 .grid[data-view="random"][data-count="3"] {
-  --scale: 0.9;
+  --scale: 0.95;
 }
 
 .grid[data-view="random"][data-count="6"] {
-  --scale: 0.78;
+  --scale: 0.8;
 }
 
 .grid[data-view="rows"] {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  --scale: 0.62;
+  --scale: 0.6;
 }
 
 .grid[data-view="complete"] {
   grid-template-columns: minmax(260px, 1fr);
-  --scale: 1.05;
+  --scale: 1;
 }
 
 .hex-item {
@@ -287,7 +287,7 @@ select {
   gap: 12px;
   justify-items: center;
   width: 100%;
-  max-width: 260px;
+  max-width: 300px;
   animation: rise 0.6s ease both;
 }
 
@@ -300,7 +300,74 @@ select {
   background-position: calc(var(--bx) * var(--scale)) calc(var(--by) * var(--scale));
   border-radius: 12px;
   box-shadow: 0 12px 24px rgba(29, 26, 20, 0.15);
-  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
+  cursor: zoom-in;
+}
+
+.grid[data-view="rows"] .hex-item {
+  max-width: 240px;
+}
+
+.grid[data-view="rows"] {
+  gap: 20px;
+}
+
+.grid[data-view="complete"] .hex-item {
+  max-width: 320px;
+}
+
+.grid[data-view="complete"] {
+  gap: 20px;
+}
+
+.grid[data-view="random"][data-count="3"] {
+  gap: 22px;
+}
+
+.grid[data-view="random"][data-count="6"] {
+  gap: 18px;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 9, 8, 0.82);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  z-index: 50;
+}
+
+.lightbox.is-open {
+  display: flex;
+}
+
+.lightbox-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  background: #fff;
+  padding: 24px 20px 18px;
+  border-radius: 20px;
+  max-width: min(90vw, 480px);
+  max-height: 90vh;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.lightbox-hex {
+  --scale: 1.1;
+  width: min(calc(var(--cell-w) * var(--scale)), 80vw);
+  height: min(calc(var(--cell-h) * var(--scale)), 70vh);
+  box-shadow: none;
+  cursor: zoom-out;
+}
+
+.lightbox-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 .hex-label {
