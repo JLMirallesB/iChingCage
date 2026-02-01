@@ -169,6 +169,28 @@ select {
   line-height: 1.4;
   white-space: pre-line;
 }
+
+.footer {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.footer a {
+  color: inherit;
+}
+
+.kofi {
+  justify-self: start;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 .design-hex {
   --scale: 1.05;
 }
