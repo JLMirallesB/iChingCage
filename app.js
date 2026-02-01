@@ -874,6 +874,7 @@ function parseWenRaw(raw) {
 }
 
 const WEN_INFO = parseWenRaw(WEN_RAW);
+console.log("[iChing] WEN_INFO size", Object.keys(WEN_INFO).length);
 
 function randInt(max) {
   if (window.crypto && window.crypto.getRandomValues) {
@@ -1053,6 +1054,7 @@ function updateAutoplay() {
 }
 
 function updateDesignInfo(hexNumber) {
+  console.log("[iChing] updateDesignInfo", hexNumber, WEN_INFO[hexNumber]);
   const info = WEN_INFO[hexNumber];
   if (!info) {
     designInfo.textContent = "Texto pendiente de carga.";
