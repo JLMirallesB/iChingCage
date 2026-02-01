@@ -153,6 +153,7 @@ select {
 }
 
 .complete-mode,
+.complete-auto,
 .complete-nav {
   display: flex;
   gap: 10px;
@@ -269,12 +270,12 @@ select {
 }
 
 .grid[data-view="random"][data-count="6"] {
-  --scale: 0.82;
+  --scale: 0.72;
 }
 
 .grid[data-view="rows"] {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  --scale: 0.7;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  --scale: 0.62;
 }
 
 .grid[data-view="complete"] {
@@ -309,7 +310,7 @@ select {
 }
 
 .grid[data-view="rows"] {
-  gap: 20px;
+  gap: 24px;
 }
 
 .grid[data-view="complete"] .hex-item {
@@ -325,7 +326,7 @@ select {
 }
 
 .grid[data-view="random"][data-count="6"] {
-  gap: 18px;
+  gap: 24px;
 }
 
 .lightbox {
@@ -347,6 +348,7 @@ select {
   display: grid;
   gap: 12px;
   justify-items: center;
+  text-align: center;
   background: #fff;
   padding: 24px 20px 18px;
   border-radius: 20px;
@@ -368,6 +370,29 @@ select {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
+}
+
+.lightbox-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-progress {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-controls.is-hidden,
+.lightbox-progress.is-hidden {
+  display: none;
+}
+
+.lightbox:not([data-context="complete"]) .lightbox-progress {
+  display: none;
 }
 
 .hex-label {

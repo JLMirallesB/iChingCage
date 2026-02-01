@@ -66,7 +66,24 @@
               <label for="completeSelect">Modo</label>
               <select id="completeSelect">
                 <option value="shuffle">Aleatorio</option>
-                <option value="sequence">Secuencia original</option>
+                <option value="circular">Aleatorio circular</option>
+                <option value="sequence">Secuencia Wen</option>
+              </select>
+            </div>
+            <div class="complete-auto">
+              <label for="autoplaySelect">Autoplay</label>
+              <select id="autoplaySelect">
+                <option value="0">Off</option>
+                <option value="0.5">0.5s</option>
+                <option value="1">1.0s</option>
+                <option value="1.5">1.5s</option>
+                <option value="2">2.0s</option>
+                <option value="2.5">2.5s</option>
+                <option value="3" selected>3.0s</option>
+                <option value="3.5">3.5s</option>
+                <option value="4">4.0s</option>
+                <option value="4.5">4.5s</option>
+                <option value="5">5.0s</option>
               </select>
             </div>
             <div class="complete-nav">
@@ -93,6 +110,16 @@
       <div class="lightbox-card">
         <div class="hex lightbox-hex" id="lightboxHex" role="img" aria-label="Hexagrama ampliado"></div>
         <div class="lightbox-label" id="lightboxLabel">Hexagrama</div>
+        <div class="lightbox-controls" id="lightboxControls">
+          <button id="lightPrev" class="ghost" type="button">Anterior</button>
+          <button id="lightNext" class="ghost" type="button">Siguiente</button>
+        </div>
+        <div class="lightbox-progress" id="lightboxProgress">
+          <div class="progress">
+            <div class="progress-bar" id="lightProgressBar"></div>
+          </div>
+          <span id="lightProgressText">1 / 64</span>
+        </div>
       </div>
     </div>
   </body>

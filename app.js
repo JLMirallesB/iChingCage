@@ -8,6 +8,19 @@ const SHEET = {
   rows: [206.93, 515.91, 824.88, 1133.86, 1444.25, 1751.81, 2060.79, 2371.18],
 };
 
+const WEN_PATTERNS = [
+  "111111", "000000", "010001", "100010", "010111", "111010", "000010", "010000",
+  "110111", "111011", "000111", "111000", "111101", "101111", "000100", "001000",
+  "011001", "100110", "000011", "110000", "101001", "100101", "100000", "000001",
+  "111001", "100111", "100001", "011110", "010010", "101101", "011100", "001110",
+  "111100", "001111", "101000", "000101", "110101", "101011", "010100", "001010",
+  "100011", "110001", "011111", "111110", "011000", "000110", "011010", "010110",
+  "011101", "101110", "001001", "100100", "110100", "001011", "001101", "101100",
+  "110110", "011011", "110010", "010011", "110011", "001100", "010101", "101010",
+];
+
+const PATTERN_TO_INDEX = new Map(WEN_PATTERNS.map((pattern, index) => [pattern, index]));
+
 const HEXES = [];
 for (let r = 0; r < 8; r += 1) {
   for (let c = 0; c < 8; c += 1) {
@@ -28,6 +41,7 @@ const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const rowSelect = document.getElementById("rowSelect");
 const completeSelect = document.getElementById("completeSelect");
+const autoplaySelect = document.getElementById("autoplaySelect");
 const designHex = document.getElementById("designHex");
 const designLabel = document.getElementById("designLabel");
 const progressBar = document.getElementById("progressBar");
@@ -35,6 +49,12 @@ const progressText = document.getElementById("progressText");
 const lightbox = document.getElementById("lightbox");
 const lightboxHex = document.getElementById("lightboxHex");
 const lightboxLabel = document.getElementById("lightboxLabel");
+const lightboxControls = document.getElementById("lightboxControls");
+const lightboxProgress = document.getElementById("lightboxProgress");
+const lightPrev = document.getElementById("lightPrev");
+const lightNext = document.getElementById("lightNext");
+const lightProgressBar = document.getElementById("lightProgressBar");
+const lightProgressText = document.getElementById("lightProgressText");
 const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 const controlGroups = Array.from(document.querySelectorAll("[data-controls]"));
 const lineButtons = Array.from(document.querySelectorAll(".line-btn"));
@@ -44,8 +64,14 @@ let currentView = "random";
 let completeMode = "shuffle";
 let completeOrder = [];
 let completeIndex = 0;
+let currentRenderedIndices = [];
 let manualLines = Array(6).fill(1);
 let rolling = false;
+let lightboxIndices = [];
+let lightboxPosition = 0;
+let lightboxContext = "set";
+let autoplayMs = 3000;
+let autoplayTimer = null;
 
 function randInt(max) {
   if (window.crypto && window.crypto.getRandomValues) {
@@ -73,6 +99,7 @@ function pickRandom(count) {
 function render(indices) {
   grid.innerHTML = "";
   grid.dataset.count = String(indices.length);
+  currentRenderedIndices = indices.slice();
 
   const fragment = document.createDocumentFragment();
   indices.forEach((index, i) => {
@@ -88,6 +115,7 @@ function render(indices) {
     glyph.setAttribute("role", "img");
     glyph.setAttribute("aria-label", `Hexagrama ${hex.id}`);
     glyph.dataset.hex = String(hex.id);
+    glyph.dataset.index = String(index);
 
     const label = document.createElement("div");
     label.className = "hex-label";
@@ -155,24 +183,20 @@ function renderRow(rowIndex) {
   rollLabel.textContent = `Fila ${rowIndex + 1}`;
 }
 
-function linesToIndex(linesTopToBottom) {
-  let value = 0;
-  for (let i = 0; i < 6; i += 1) {
-    const bit = linesTopToBottom[5 - i];
-    value |= (bit ? 1 : 0) << i;
-  }
-  return value;
-}
-
 function renderDesign() {
-  const index = linesToIndex(manualLines);
+  const pattern = manualLines.map((bit) => (bit ? "1" : "0")).join("");
+  const index = PATTERN_TO_INDEX.get(pattern);
+  if (index === undefined) {
+    return;
+  }
   const hex = HEXES[index];
   const row = Math.floor(index / 8) + 1;
   const col = (index % 8) + 1;
-  const binary = manualLines.map((bit) => (bit ? 1 : 0)).join("");
+  const binary = pattern;
   designHex.style.setProperty("--bx", `-${hex.x}px`);
   designHex.style.setProperty("--by", `-${hex.y}px`);
   designHex.dataset.hex = String(hex.id);
+  designHex.dataset.index = String(index);
   designLabel.textContent = `Hexagrama ${hex.id} · Fila ${row} Col ${col} · ${binary}`;
   rollLabel.textContent = `Hexagrama ${hex.id}`;
 }
@@ -196,6 +220,87 @@ function renderComplete() {
   progressBar.style.width = `${(current / 64) * 100}%`;
   progressText.textContent = `${current} / 64`;
   rollLabel.textContent = `Hexagrama ${index + 1}`;
+  if (lightbox.classList.contains("is-open") && lightboxContext === "complete") {
+    lightboxPosition = completeIndex;
+    updateLightbox();
+  }
+}
+
+function stepComplete(delta) {
+  if (completeMode === "circular") {
+    if (delta > 0 && completeIndex === completeOrder.length - 1) {
+      completeOrder = buildCompleteOrder("shuffle");
+      completeIndex = 0;
+    } else {
+      completeIndex = (completeIndex + delta + completeOrder.length) % completeOrder.length;
+    }
+  } else {
+    completeIndex = (completeIndex + delta + completeOrder.length) % completeOrder.length;
+  }
+  renderComplete();
+  if (lightbox.classList.contains("is-open") && lightboxContext === "complete") {
+    lightboxPosition = completeIndex;
+    updateLightbox();
+  }
+}
+
+function updateLightbox() {
+  const index = lightboxIndices[lightboxPosition];
+  const hex = HEXES[index];
+  lightboxHex.style.setProperty("--bx", `-${hex.x}px`);
+  lightboxHex.style.setProperty("--by", `-${hex.y}px`);
+  lightboxHex.dataset.hex = String(hex.id);
+  lightboxHex.dataset.index = String(index);
+  lightboxLabel.textContent = `Hexagrama ${hex.id}`;
+
+  const showNav = lightboxIndices.length > 1;
+  lightboxControls.classList.toggle("is-hidden", !showNav);
+  if (lightboxContext === "complete") {
+    const current = lightboxPosition + 1;
+    lightProgressBar.style.width = `${(current / 64) * 100}%`;
+    lightProgressText.textContent = `${current} / 64`;
+    lightboxProgress.classList.remove("is-hidden");
+  } else {
+    lightboxProgress.classList.add("is-hidden");
+  }
+}
+
+function openLightbox(indices, position, context = "set") {
+  lightboxIndices = indices;
+  lightboxPosition = position;
+  lightboxContext = context;
+  lightbox.dataset.context = context;
+  updateLightbox();
+  lightbox.classList.add("is-open");
+  lightbox.setAttribute("aria-hidden", "false");
+}
+
+function closeLightbox() {
+  lightbox.classList.remove("is-open");
+  lightbox.setAttribute("aria-hidden", "true");
+  lightbox.dataset.context = "";
+}
+
+function moveLightbox(delta) {
+  if (lightboxContext === "complete") {
+    stepComplete(delta);
+    return;
+  }
+  const len = lightboxIndices.length || 1;
+  lightboxPosition = (lightboxPosition + delta + len) % len;
+  updateLightbox();
+}
+
+function updateAutoplay() {
+  if (autoplayTimer) {
+    clearInterval(autoplayTimer);
+    autoplayTimer = null;
+  }
+  if (currentView === "complete" && autoplayMs > 0) {
+    autoplayTimer = setInterval(() => {
+      stepComplete(1);
+    }, autoplayMs);
+  }
 }
 
 function setView(view, doRender = true) {
@@ -219,9 +324,12 @@ function setView(view, doRender = true) {
     renderDesign();
   }
   if (view === "complete") {
-    completeOrder = buildCompleteOrder(completeMode);
+    completeOrder = buildCompleteOrder(completeMode === "circular" ? "shuffle" : completeMode);
     completeIndex = 0;
     renderComplete();
+    updateAutoplay();
+  } else {
+    updateAutoplay();
   }
 }
 
@@ -238,12 +346,10 @@ modeButtons.forEach((button) => {
 
 rollBtn.addEventListener("click", () => roll(currentCount));
 prevBtn.addEventListener("click", () => {
-  completeIndex = (completeIndex + 63) % 64;
-  renderComplete();
+  stepComplete(-1);
 });
 nextBtn.addEventListener("click", () => {
-  completeIndex = (completeIndex + 1) % 64;
-  renderComplete();
+  stepComplete(1);
 });
 
 rowSelect.addEventListener("change", () => {
@@ -255,10 +361,15 @@ rowSelect.addEventListener("change", () => {
 completeSelect.addEventListener("change", () => {
   completeMode = completeSelect.value;
   if (currentView === "complete") {
-    completeOrder = buildCompleteOrder(completeMode);
+    completeOrder = buildCompleteOrder(completeMode === "circular" ? "shuffle" : completeMode);
     completeIndex = 0;
     renderComplete();
   }
+});
+
+autoplaySelect.addEventListener("change", () => {
+  autoplayMs = Math.round(Number(autoplaySelect.value) * 1000);
+  updateAutoplay();
 });
 
 lineButtons.forEach((button) => {
@@ -287,15 +398,21 @@ function closeLightbox() {
 document.addEventListener("click", (event) => {
   const target = event.target;
   if (target instanceof HTMLElement && target.classList.contains("hex")) {
-    const hexId = Number(target.dataset.hex);
-    const bx = target.style.getPropertyValue("--bx");
-    const by = target.style.getPropertyValue("--by");
-    if (hexId && bx && by) {
-      openLightbox(hexId, bx, by);
+    if (target.closest(".lightbox")) return;
+    const index = Number(target.dataset.index);
+    if (!Number.isFinite(index)) return;
+    if (currentView === "complete") {
+      openLightbox(completeOrder, completeIndex, "complete");
+    } else if (currentView === "design") {
+      openLightbox([index], 0, "single");
+    } else {
+      const pos = currentRenderedIndices.indexOf(index);
+      const list = currentRenderedIndices.length ? currentRenderedIndices : [index];
+      openLightbox(list, Math.max(0, pos), "set");
     }
     return;
   }
-  if (target instanceof HTMLElement && (target.id === "lightbox" || target.classList.contains("lightbox-hex"))) {
+  if (target instanceof HTMLElement && target.id === "lightbox") {
     closeLightbox();
   }
 });
@@ -305,6 +422,9 @@ document.addEventListener("keydown", (event) => {
     closeLightbox();
   }
 });
+
+lightPrev.addEventListener("click", () => moveLightbox(-1));
+lightNext.addEventListener("click", () => moveLightbox(1));
 
 setMode(1, false);
 setView("random", true);
