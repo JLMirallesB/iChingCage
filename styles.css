@@ -144,12 +144,30 @@ select {
   justify-items: center;
 }
 
+.design-meta {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.design-symbol {
+  font-size: 2.4rem;
+  font-family: "Noto Serif CJK SC", "Songti SC", "Hiragino Mincho ProN", serif;
+  color: var(--ink);
+  display: none;
+}
+
+.design-symbol.is-visible {
+  display: inline;
+}
+
 .design-info {
   max-width: 320px;
   font-size: 0.85rem;
   color: var(--ink-soft);
   text-align: center;
   line-height: 1.4;
+  white-space: pre-line;
 }
 .design-hex {
   --scale: 1.05;
