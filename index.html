@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iChing Cage</title>
+    <link rel="preload" as="image" href="assets/iching-sheet.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <main class="app">
+      <header class="hero">
+        <p class="kicker">I Ching Cage</p>
+        <h1>Hexagramas tipograficos, lanzados al azar.</h1>
+        <p class="sub">
+          Cada simbolo proviene del PDF original. Elige cuantos quieres y lanza los dados.
+        </p>
+      </header>
+
+      <section class="panel">
+        <div class="controls">
+          <div class="mode" role="group" aria-label="Cantidad de hexagramas">
+            <button class="mode-btn" data-count="1" aria-pressed="true" type="button">1</button>
+            <button class="mode-btn" data-count="3" aria-pressed="false" type="button">3</button>
+            <button class="mode-btn" data-count="6" aria-pressed="false" type="button">6</button>
+          </div>
+          <button id="rollBtn" class="roll" type="button">Lanzar dados</button>
+        </div>
+
+        <div class="status">
+          <span id="modeLabel">Modo: 1 hexagrama</span>
+          <span id="rollLabel">Ultima tirada: --</span>
+        </div>
+
+        <div class="grid" id="grid" data-count="1" aria-live="polite"></div>
+      </section>
+
+      <footer class="footer">
+        <span>Fuente visual: I Ching rev.pdf</span>
+        <span>64 simbolos en una sola plancha tipografica.</span>
+      </footer>
+    </main>
+  </body>
+</html>
