@@ -150,24 +150,31 @@ select {
   justify-items: center;
 }
 
-.design-symbol {
-  font-size: 2.4rem;
+.design-toggle {
+  font-size: 2.2rem;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fff;
   font-family: "Noto Serif CJK SC", "Songti SC", "Hiragino Mincho ProN", serif;
-  color: var(--ink);
-  display: none;
-}
-
-.design-symbol.is-visible {
-  display: inline;
 }
 
 .design-info {
-  max-width: 320px;
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-  text-align: center;
-  line-height: 1.4;
-  white-space: pre-line;
+  display: none;
+  max-width: 420px;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: left;
+  line-height: 1.55;
+  background: #f3ede2;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: normal;
+}
+
+.design-info.is-visible {
+  display: block;
 }
 
 .footer {

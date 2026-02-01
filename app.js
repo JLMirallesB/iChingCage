@@ -46,7 +46,6 @@ const designHex = document.getElementById("designHex");
 const designLabel = document.getElementById("designLabel");
 const designInfo = document.getElementById("designInfo");
 const designToggle = document.getElementById("designToggle");
-const designSymbol = document.getElementById("designSymbol");
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
 const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
@@ -1054,21 +1053,25 @@ function updateAutoplay() {
 }
 
 function updateDesignInfo(hexNumber) {
-  console.log("[iChing] updateDesignInfo", hexNumber, WEN_INFO[hexNumber]);
   const info = WEN_INFO[hexNumber];
   if (!info) {
     designInfo.textContent = "Texto pendiente de carga.";
-    designSymbol.textContent = "";
-    designSymbol.classList.remove("is-visible");
-    designToggle.textContent = "Ver caracter chino";
+    designToggle.textContent = "？";
+    designInfo.classList.remove("is-visible");
     return;
   }
-  const description = info.descripcion ? `Descripción: ${info.descripcion}` : "";
-  const dictamen = info.dictamen ? `Dictamen: ${info.dictamen}` : "";
-  designInfo.textContent = [description, dictamen].filter(Boolean).join("\n\n");
-  designSymbol.textContent = info.simbolo || "";
-  designSymbol.classList.remove("is-visible");
-  designToggle.textContent = "Ver caracter chino";
+  const description = info.descripcion || "";
+  const dictamen = info.dictamen || "";
+  const safe = (text) =>
+    text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  const descHtml = description ? `<strong>Descripción</strong><br>${safe(description).replace(/\n/g, "<br>")}` : "";
+  const dictHtml = dictamen ? `<strong>Dictamen</strong><br>${safe(dictamen).replace(/\n/g, "<br>")}` : "";
+  designInfo.innerHTML = [descHtml, dictHtml].filter(Boolean).join("<br><br>");
+  designToggle.textContent = info.simbolo || "？";
+  designInfo.classList.remove("is-visible");
 }
 
 function setView(view, doRender = true) {
@@ -1150,8 +1153,7 @@ lineButtons.forEach((button) => {
 });
 
 designToggle.addEventListener("click", () => {
-  const isVisible = designSymbol.classList.toggle("is-visible");
-  designToggle.textContent = isVisible ? "Ocultar caracter chino" : "Ver caracter chino";
+  designInfo.classList.toggle("is-visible");
 });
 
 setMode(1, false);
