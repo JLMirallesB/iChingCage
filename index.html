@@ -17,12 +17,14 @@
 
       <section class="panel">
         <div class="controls">
-          <div class="view" role="group" aria-label="Vista">
-            <button class="view-btn" data-view="random" aria-pressed="true" type="button">Aleatorio</button>
-            <button class="view-btn" data-view="rows" aria-pressed="false" type="button">Filas 8</button>
-            <button class="view-btn" data-view="shuffle" aria-pressed="false" type="button">Aleatorio 64</button>
-            <button class="view-btn" data-view="sequence" aria-pressed="false" type="button">Secuencia</button>
-            <button class="view-btn" data-view="manual" aria-pressed="false" type="button">Manual</button>
+          <div class="mode-group">
+            <label for="modeSelect">Modos de juego</label>
+            <select id="modeSelect">
+              <option value="random">Aleatorio</option>
+              <option value="rows">Filas de 8</option>
+              <option value="design">Diseña</option>
+              <option value="complete">Completo</option>
+            </select>
           </div>
           <div class="control-group" data-controls="random">
             <div class="mode" role="group" aria-label="Cantidad de hexagramas">
@@ -32,11 +34,20 @@
             </div>
             <button id="rollBtn" class="roll" type="button">Lanzar dados</button>
           </div>
-          <div class="control-group sequence-controls" data-controls="sequence">
-            <button id="prevBtn" class="ghost" type="button">Anterior</button>
-            <button id="nextBtn" class="ghost" type="button">Siguiente</button>
+          <div class="control-group" data-controls="rows">
+            <label for="rowSelect">Fila</label>
+            <select id="rowSelect">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
           </div>
-          <div class="control-group manual-controls" data-controls="manual">
+          <div class="control-group design-controls" data-controls="design">
             <div class="lines" role="group" aria-label="Lineas">
               <button class="line-btn" data-line="0" type="button">—</button>
               <button class="line-btn" data-line="1" type="button">—</button>
@@ -45,6 +56,27 @@
               <button class="line-btn" data-line="4" type="button">—</button>
               <button class="line-btn" data-line="5" type="button">—</button>
             </div>
+            <div class="design-preview">
+              <div class="hex design-hex" id="designHex" role="img" aria-label="Hexagrama manual"></div>
+              <div class="hex-label" id="designLabel">Hexagrama 1</div>
+            </div>
+          </div>
+          <div class="control-group complete-controls" data-controls="complete">
+            <div class="complete-mode">
+              <label for="completeSelect">Modo</label>
+              <select id="completeSelect">
+                <option value="shuffle">Aleatorio</option>
+                <option value="sequence">Secuencia original</option>
+              </select>
+            </div>
+            <div class="complete-nav">
+              <button id="prevBtn" class="ghost" type="button">Anterior</button>
+              <button id="nextBtn" class="ghost" type="button">Siguiente</button>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <span id="progressText">1 / 64</span>
           </div>
         </div>
 

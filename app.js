@@ -20,19 +20,27 @@ for (let r = 0; r < 8; r += 1) {
 }
 
 const grid = document.getElementById("grid");
+const modeSelect = document.getElementById("modeSelect");
 const rollBtn = document.getElementById("rollBtn");
 const modeLabel = document.getElementById("modeLabel");
 const rollLabel = document.getElementById("rollLabel");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
-const viewButtons = Array.from(document.querySelectorAll(".view-btn"));
+const rowSelect = document.getElementById("rowSelect");
+const completeSelect = document.getElementById("completeSelect");
+const designHex = document.getElementById("designHex");
+const designLabel = document.getElementById("designLabel");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
 const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
 const controlGroups = Array.from(document.querySelectorAll("[data-controls]"));
 const lineButtons = Array.from(document.querySelectorAll(".line-btn"));
 
 let currentCount = 1;
 let currentView = "random";
-let sequenceIndex = 0;
+let completeMode = "shuffle";
+let completeOrder = [];
+let completeIndex = 0;
 let manualLines = Array(6).fill(1);
 let rolling = false;
 
@@ -91,10 +99,9 @@ function render(indices) {
 function formatModeLabel() {
   const labels = {
     random: "Aleatorio",
-    rows: "Filas 8",
-    shuffle: "Aleatorio 64",
-    sequence: "Secuencia",
-    manual: "Manual",
+    rows: "Filas de 8",
+    design: "Diseña",
+    complete: "Completo",
   };
   return `Modo: ${labels[currentView] || "Aleatorio"}`;
 }
@@ -137,24 +144,11 @@ function roll(count) {
   }, 80);
 }
 
-function renderRows() {
-  render(Array.from({ length: 64 }, (_, i) => i));
-  rollLabel.textContent = "Ultima tirada: --";
-}
-
-function renderShuffle() {
-  const pool = HEXES.map((_, index) => index);
-  for (let i = pool.length - 1; i > 0; i -= 1) {
-    const j = randInt(i + 1);
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  render(pool);
-  rollLabel.textContent = "Ultima tirada: --";
-}
-
-function renderSequence() {
-  render([sequenceIndex]);
-  rollLabel.textContent = `Hexagrama ${sequenceIndex + 1} de 64`;
+function renderRow(rowIndex) {
+  const start = rowIndex * 8;
+  const indices = Array.from({ length: 8 }, (_, i) => start + i);
+  render(indices);
+  rollLabel.textContent = `Fila ${rowIndex + 1}`;
 }
 
 function linesToIndex(linesTopToBottom) {
@@ -166,20 +160,41 @@ function linesToIndex(linesTopToBottom) {
   return value;
 }
 
-function renderManual() {
+function renderDesign() {
   const index = linesToIndex(manualLines);
+  const hex = HEXES[index];
+  designHex.style.setProperty("--bx", `-${hex.x}px`);
+  designHex.style.setProperty("--by", `-${hex.y}px`);
+  designLabel.textContent = `Hexagrama ${hex.id}`;
+  rollLabel.textContent = `Hexagrama ${hex.id}`;
+}
+
+function buildCompleteOrder(mode) {
+  if (mode === "sequence") {
+    return HEXES.map((_, i) => i);
+  }
+  const pool = HEXES.map((_, i) => i);
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = randInt(i + 1);
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+function renderComplete() {
+  const index = completeOrder[completeIndex];
   render([index]);
-  rollLabel.textContent = `Hexagrama ${index + 1} (manual)`;
+  const current = completeIndex + 1;
+  progressBar.style.width = `${(current / 64) * 100}%`;
+  progressText.textContent = `${current} / 64`;
+  rollLabel.textContent = `Hexagrama ${index + 1}`;
 }
 
 function setView(view, doRender = true) {
   currentView = view;
   grid.dataset.view = view;
   modeLabel.textContent = formatModeLabel();
-  viewButtons.forEach((btn) => {
-    const isActive = btn.dataset.view === view;
-    btn.setAttribute("aria-pressed", String(isActive));
-  });
+  modeSelect.value = view;
   controlGroups.forEach((group) => {
     const isActive = group.dataset.controls === view;
     group.classList.toggle("is-active", isActive);
@@ -188,22 +203,22 @@ function setView(view, doRender = true) {
   if (!doRender) return;
   if (view === "random") {
     roll(currentCount);
-  } else if (view === "rows") {
-    renderRows();
-  } else if (view === "shuffle") {
-    renderShuffle();
-  } else if (view === "sequence") {
-    renderSequence();
-  } else if (view === "manual") {
-    renderManual();
+  }
+  if (view === "rows") {
+    renderRow(Number(rowSelect.value) - 1);
+  }
+  if (view === "design") {
+    renderDesign();
+  }
+  if (view === "complete") {
+    completeOrder = buildCompleteOrder(completeMode);
+    completeIndex = 0;
+    renderComplete();
   }
 }
 
-viewButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const view = button.dataset.view;
-    setView(view, true);
-  });
+modeSelect.addEventListener("change", () => {
+  setView(modeSelect.value, true);
 });
 
 modeButtons.forEach((button) => {
@@ -215,12 +230,27 @@ modeButtons.forEach((button) => {
 
 rollBtn.addEventListener("click", () => roll(currentCount));
 prevBtn.addEventListener("click", () => {
-  sequenceIndex = (sequenceIndex + 63) % 64;
-  renderSequence();
+  completeIndex = (completeIndex + 63) % 64;
+  renderComplete();
 });
 nextBtn.addEventListener("click", () => {
-  sequenceIndex = (sequenceIndex + 1) % 64;
-  renderSequence();
+  completeIndex = (completeIndex + 1) % 64;
+  renderComplete();
+});
+
+rowSelect.addEventListener("change", () => {
+  if (currentView === "rows") {
+    renderRow(Number(rowSelect.value) - 1);
+  }
+});
+
+completeSelect.addEventListener("change", () => {
+  completeMode = completeSelect.value;
+  if (currentView === "complete") {
+    completeOrder = buildCompleteOrder(completeMode);
+    completeIndex = 0;
+    renderComplete();
+  }
 });
 
 lineButtons.forEach((button) => {
@@ -228,7 +258,7 @@ lineButtons.forEach((button) => {
     const index = Number(button.dataset.line);
     manualLines[index] = manualLines[index] ? 0 : 1;
     button.textContent = manualLines[index] ? "—" : "-- --";
-    renderManual();
+    renderDesign();
   });
 });
 
